@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Statuette Clicker с генератором имён</title>
+<title>Statuette Clicker с генератором имён и командой для денег</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -57,7 +57,6 @@ const sellPrices = {
   legendary: 150
 };
 
-// Убрали фиксированные названия, теперь генератор имён
 const nameParts = {
   common: {
     adjectives: ["Старая", "Пластмассовый", "Оловянный", "Деревянная"],
@@ -85,7 +84,6 @@ function generateName(rarity) {
   const parts = nameParts[rarity];
   if (!parts) return "Неизвестная статуэтка";
 
-  // Шанс повторить старое название
   if (Math.random() < parts.repeatChance && collection.length > 0) {
     const filtered = collection.filter(s => s.rarity === rarity && typeof s !== "string");
     if (filtered.length > 0) {
@@ -145,13 +143,10 @@ function buyBox(type) {
     chanceRepeat = 0;
   }
 
-  // Генерируем название статуэтки
   let name = generateName(rarity);
 
-  // Формируем объект статуэтки
   let statuette = { name: name, rarity: rarity };
 
-  // Иногда может выпадать повторка (строка имени)
   if (Math.random() * 100 < chanceRepeat && collection.length > 0) {
     let repeats = collection.filter(s => typeof s === "string");
     if (repeats.length > 0) {
@@ -203,6 +198,14 @@ function sellStatue(index) {
   updateCoins();
   updateCollection();
   saveProgress();
+}
+
+// Новая функция для назначения монет из консоли
+function setCoins(amount) {
+  coins = amount;
+  updateCoins();
+  saveProgress();
+  console.log(`Баланс монет установлен на ${coins}`);
 }
 
 // Загружаем прогресс при старте
