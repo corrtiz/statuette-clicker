@@ -61,7 +61,7 @@ const nameParts = {
   common: {
     adjectives: ["Старая", "Пластмассовый", "Оловянный", "Деревянная"],
     nouns: ["ваза", "дракон", "солдатик", "утка"],
-    repeatChance: 0.5 // 50% шанс повторения
+    repeatChance: 0.5
   },
   rare: {
     adjectives: ["Серебряный", "Хрустальная", "Мистический"],
@@ -169,6 +169,7 @@ function weightedRandom(weights) {
   }
 }
 
+// Обновляем список коллекции на странице
 function updateCollection() {
   let list = document.getElementById('collectionList');
   list.innerHTML = "";
@@ -200,7 +201,7 @@ function sellStatue(index) {
   saveProgress();
 }
 
-// Новая функция для назначения монет из консоли
+// Функция для установки монет через консоль
 function setCoins(amount) {
   coins = amount;
   updateCoins();
@@ -208,7 +209,6 @@ function setCoins(amount) {
   console.log(`Баланс монет установлен на ${coins}`);
 }
 
-// Загружаем прогресс при старте
 loadProgress();
 </script>
 
