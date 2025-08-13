@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Statuette Clicker с сохранением</title>
+<title>Statuette Clicker с генератором имён</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -57,12 +57,46 @@ const sellPrices = {
   legendary: 150
 };
 
-const statues = {
-  common: ["Старая ваза", "Пластмассовый дракон", "Оловянный солдатик", "Деревянная утка"],
-  rare: ["Серебряный лев", "Хрустальная птица", "Статуэтка викинга"],
-  epic: ["Золотой тигр", "Сапфировый орёл", "Платиновый волк"],
-  legendary: ["Мифический феникс", "Алмазный единорог", "Золотой дракон"]
+// Убрали фиксированные названия, теперь генератор имён
+const nameParts = {
+  common: {
+    adjectives: ["Старая", "Пластмассовый", "Оловянный", "Деревянная"],
+    nouns: ["ваза", "дракон", "солдатик", "утка"],
+    repeatChance: 0.5 // 50% шанс повторения
+  },
+  rare: {
+    adjectives: ["Серебряный", "Хрустальная", "Мистический"],
+    nouns: ["лев", "птица", "викинг"],
+    repeatChance: 0.3
+  },
+  epic: {
+    adjectives: ["Золотой", "Сапфировый", "Платиновый"],
+    nouns: ["тигр", "орёл", "волк"],
+    repeatChance: 0.1
+  },
+  legendary: {
+    adjectives: ["Мифический", "Алмазный", "Вечный"],
+    nouns: ["феникс", "единорог", "дракон"],
+    repeatChance: 0.0
+  }
 };
+
+function generateName(rarity) {
+  const parts = nameParts[rarity];
+  if (!parts) return "Неизвестная статуэтка";
+
+  // Шанс повторить старое название
+  if (Math.random() < parts.repeatChance && collection.length > 0) {
+    const filtered = collection.filter(s => s.rarity === rarity && typeof s !== "string");
+    if (filtered.length > 0) {
+      return filtered[Math.floor(Math.random() * filtered.length)].name;
+    }
+  }
+
+  const adj = parts.adjectives[Math.floor(Math.random() * parts.adjectives.length)];
+  const noun = parts.nouns[Math.floor(Math.random() * parts.nouns.length)];
+  return adj + " " + noun;
+}
 
 function saveProgress() {
   localStorage.setItem('coins', coins);
@@ -97,13 +131,6 @@ function buyBox(type) {
   coins -= prices[type];
   updateCoins();
 
-  let statuette = getStatuette(type);
-  collection.push(statuette);
-  updateCollection();
-  saveProgress();
-}
-
-function getStatuette(type) {
   let rarity;
   let chanceRepeat;
 
@@ -118,13 +145,23 @@ function getStatuette(type) {
     chanceRepeat = 0;
   }
 
+  // Генерируем название статуэтки
+  let name = generateName(rarity);
+
+  // Формируем объект статуэтки
+  let statuette = { name: name, rarity: rarity };
+
+  // Иногда может выпадать повторка (строка имени)
   if (Math.random() * 100 < chanceRepeat && collection.length > 0) {
-    return collection[Math.floor(Math.random() * collection.length)];
+    let repeats = collection.filter(s => typeof s === "string");
+    if (repeats.length > 0) {
+      statuette = repeats[Math.floor(Math.random() * repeats.length)];
+    }
   }
 
-  let pool = statues[rarity];
-  let item = pool[Math.floor(Math.random() * pool.length)];
-  return { name: item, rarity: rarity };
+  collection.push(statuette);
+  updateCollection();
+  saveProgress();
 }
 
 function weightedRandom(weights) {
