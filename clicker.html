@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Statuette Clicker с сохранением</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+  }
+  button {
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .common { color: green; }
+  .rare { color: blue; }
+  .epic { color: purple; }
+  .legendary { color: goldenrod; }
+  .collection {
+    margin-top: 30px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Statuette Clicker</h1>
+<p>Монеты: <span id="coins">0</span></p>
+<button onclick="addCoins()">Клик!</button>
+
+<div>
+  <button onclick="buyBox('cheap')">Дешёвый бокс (10 монет)</button>
+  <button onclick="buyBox('medium')">Средний бокс (50 монет)</button>
+  <button onclick="buyBox('premium')">Премиум бокс (200 монет)</button>
+</div>
+
+<div class="collection">
+  <h2>Твоя коллекция:</h2>
+  <ul id="collectionList"></ul>
+</div>
+
+<script>
+let coins = 0;
+let collection = [];
+
+const sellPrices = {
+  common: 5,
+  rare: 15,
+  epic: 50,
+  legendary: 150
+};
+
+const statues = {
+  common: ["Старая ваза", "Пластмассовый дракон", "Оловянный солдатик", "Деревянная утка"],
+  rare: ["Серебряный лев", "Хрустальная птица", "Статуэтка викинга"],
+  epic: ["Золотой тигр", "Сапфировый орёл", "Платиновый волк"],
+  legendary: ["Мифический феникс", "Алмазный единорог", "Золотой дракон"]
+};
+
+function saveProgress() {
+  localStorage.setItem('coins', coins);
+  localStorage.setItem('collection', JSON.stringify(collection));
+}
+
+function loadProgress() {
+  let savedCoins = localStorage.getItem('coins');
+  let savedCollection = localStorage.getItem('collection');
+  if (savedCoins !== null) coins = parseInt(savedCoins);
+  if (savedCollection !== null) collection = JSON.parse(savedCollection);
+  updateCoins();
+  updateCollection();
+}
+
+function addCoins() {
+  coins++;
+  updateCoins();
+  saveProgress();
+}
+
+function updateCoins() {
+  document.getElementById('coins').innerText = coins;
+}
+
+function buyBox(type) {
+  let prices = { cheap: 10, medium: 50, premium: 200 };
+  if (coins < prices[type]) {
+    alert("Недостаточно монет!");
+    return;
+  }
+  coins -= prices[type];
+  updateCoins();
+
+  let statuette = getStatuette(type);
+  collection.push(statuette);
+  updateCollection();
+  saveProgress();
+}
+
+function getStatuette(type) {
+  let rarity;
+  let chanceRepeat;
+
+  if (type === "cheap") {
+    rarity = weightedRandom({ common: 70, rare: 25, epic: 5, legendary: 0 });
+    chanceRepeat = 50;
+  } else if (type === "medium") {
+    rarity = weightedRandom({ common: 40, rare: 40, epic: 15, legendary: 5 });
+    chanceRepeat = 20;
+  } else {
+    rarity = weightedRandom({ epic: 70, legendary: 30 });
+    chanceRepeat = 0;
+  }
+
+  if (Math.random() * 100 < chanceRepeat && collection.length > 0) {
+    return collection[Math.floor(Math.random() * collection.length)];
+  }
+
+  let pool = statues[rarity];
+  let item = pool[Math.floor(Math.random() * pool.length)];
+  return { name: item, rarity: rarity };
+}
+
+function weightedRandom(weights) {
+  let total = Object.values(weights).reduce((a, b) => a + b, 0);
+  let rand = Math.random() * total;
+  let sum = 0;
+  for (let key in weights) {
+    sum += weights[key];
+    if (rand <= sum) return key;
+  }
+}
+
+function updateCollection() {
+  let list = document.getElementById('collectionList');
+  list.innerHTML = "";
+  collection.forEach((statue, index) => {
+    let li = document.createElement('li');
+    if (typeof statue === "string") {
+      li.textContent = statue + " (повторка)";
+    } else {
+      li.textContent = statue.name + " — [" + statue.rarity + "] ";
+      li.className = statue.rarity;
+
+      let sellBtn = document.createElement('button');
+      sellBtn.textContent = "Продать за " + sellPrices[statue.rarity] + " монет";
+      sellBtn.onclick = () => sellStatue(index);
+      li.appendChild(sellBtn);
+    }
+    list.appendChild(li);
+  });
+}
+
+function sellStatue(index) {
+  let statue = collection[index];
+  if (typeof statue !== "string") {
+    coins += sellPrices[statue.rarity];
+  }
+  collection.splice(index, 1);
+  updateCoins();
+  updateCollection();
+  saveProgress();
+}
+
+// Загружаем прогресс при старте
+loadProgress();
+</script>
+
+</body>
+</html>
